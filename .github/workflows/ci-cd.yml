@@ -56,6 +56,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           allow-no-subscriptions: true
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Deploy frontend to Azure Web App (container)
         uses: azure/webapps-deploy@v2
