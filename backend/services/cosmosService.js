@@ -6,11 +6,18 @@ function getContainer() {
   if (!container) {
     const uri = process.env.COSMOS_URI;
     const key = process.env.COSMOS_KEY;
-    if (!uri || !key) throw new Error("COSMOS_URI or COSMOS_KEY missing in .env");
+
+    // अगर uri undefined है, तो यह एरर साफ़ बता देगा
+    if (!uri) throw new Error("BACKEND_ERROR: COSMOS_URI is undefined. Check Azure App Settings names.");
+
+    const sanitizedUri = uri.trim().replace(/\/$/, "");
     
-    const client = new CosmosClient({ endpoint: uri, key });
-    const database = client.database("blogdb");
-    container = database.container("blogs");
+    try {
+      const client = new CosmosClient({ endpoint: sanitizedUri, key });
+      container = client.database("blogdb").container("blogs");
+    } catch (err) {
+      throw new Error(`Cosmos Client Failed: ${err.message}`);
+    }
   }
   return container;
 }
