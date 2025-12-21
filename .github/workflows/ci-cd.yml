@@ -1,9 +1,9 @@
-name: CI/CD - Build & Push (GHCR)
+name: CI/CD - Build, Push & Deploy
 
 permissions:
   contents: read
   packages: write
-  id-token: write
+  id-token: write 
 
 on:
   push:
@@ -15,9 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -25,48 +22,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
+      
+      - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/cloud-blog-backend:latest
 
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/cloud-blog-frontend:latest
-
-  deploy-to-azure:
+  deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
+      - uses: actions/checkout@v4
+
+      # 1. Backend Deploy (App Service for Containers)
       - name: Azure login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-     
-      - name: Configure Azure to pull from GHCR
-        run: |
-          az webapp config container set --name ${{ secrets.AZURE_FRONTEND_APP }} --resource-group BlogProjectRG \
-            --docker-custom-image-name "ghcr.io/${{ github.repository_owner }}/cloud-blog-frontend:latest" \
-            --docker-registry-server-url "https://ghcr.io"
-          
-          az webapp config container set --name ${{ secrets.AZURE_BACKEND_APP }} --resource-group BlogProjectRG \
-            --docker-custom-image-name "ghcr.io/${{ github.repository_owner }}/cloud-blog-backend:latest" \
-            --docker-registry-server-url "https://ghcr.io"
-
-      - name: Deploy Frontend
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ secrets.AZURE_FRONTEND_APP }}
-          images: ghcr.io/${{ github.repository_owner }}/cloud-blog-frontend:latest
-
-      - name: Deploy Backend
-        uses: azure/webapps-deploy@v2
+      - name: Deploy backend
+        uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_BACKEND_APP }}
           images: ghcr.io/${{ github.repository_owner }}/cloud-blog-backend:latest
+
+      
+      - name: Deploy Frontend to SWA
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "./frontend" 
+          output_location: "dist"    
