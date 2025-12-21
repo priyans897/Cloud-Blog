@@ -7,7 +7,7 @@ function getContainer() {
     const uri = process.env.COSMOS_URI;
     const key = process.env.COSMOS_KEY;
 
-    // अगर uri undefined है, तो यह एरर साफ़ बता देगा
+    
     if (!uri) throw new Error("BACKEND_ERROR: COSMOS_URI is undefined. Check Azure App Settings names.");
 
     const sanitizedUri = uri.trim().replace(/\/$/, "");
