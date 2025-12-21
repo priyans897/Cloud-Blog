@@ -2,24 +2,31 @@ import { BlobServiceClient } from "@azure/storage-blob";
 
 let containerClient;
 
-function getContainerClient() {
-  if (!containerClient) {
-    const connStr = process.env.AZURE_STORAGE_CONNECTION_STRING;
-    if (!connStr) throw new Error("AZURE_STORAGE_CONNECTION_STRING missing in .env");
-    const blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
-    containerClient = blobServiceClient.getContainerClient("blog-images");
+function getContainer() {
+  if (!container) {
+    let uri = process.env.COSMOS_URI;
+    const key = process.env.COSMOS_KEY;
+
+    if (uri) {
+      uri = uri.replace(/['"]+/g, '').trim(); 
+    }
+
+    console.log("Current URI being used:", uri); // ये Azure Logs में दिखेगा
+
+    if (!uri || !key) throw new Error("COSMOS_URI or COSMOS_KEY is missing");
+
+    try {
+      
+      new URL(uri); 
+      const client = new CosmosClient({ endpoint: uri, key });
+      const database = client.database("blogdb");
+      container = database.container("blogs");
+    } catch (urlErr) {
+      throw new Error(`The URI "${uri}" is not a valid URL format.`);
+    }
   }
-  return containerClient;
+  return container;
 }
-
-export default async function uploadImage(file) {
-  const container = getContainerClient();
-  const blobName = `${Date.now()}-${file.originalname}`;
-  const blockBlobClient = container.getBlockBlobClient(blobName);
-
-  await blockBlobClient.uploadData(file.buffer, {
-    blobHTTPHeaders: { blobContentType: file.mimetype }
-  });
 
   return blockBlobClient.url;
 }
