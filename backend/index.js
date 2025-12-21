@@ -12,6 +12,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api", blogRoutes);
+app.use(cors({
+  origin: 'https://orange-mud-051177900.2.azurestaticapps.net', 
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
 // Health endpoint for readiness checks
 app.get('/health', (req, res) => {

@@ -1,5 +1,6 @@
 import axios from "axios";
 
 export default axios.create({
-  baseURL: "http://localhost:5000/api"
+  // इसे Azure की लिंक से बदलें
+  baseURL: "https://cloud-blog-backend-gvffhqg9hbg8a4gn.centralindia-01.azurewebsites.net/api"
 });

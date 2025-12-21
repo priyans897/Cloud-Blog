@@ -25,6 +25,10 @@ router.post("/blog", upload.single("image"), async (req, res) => {
   }
 });
 
+
+app.get("/", (req, res) => {
+  res.send("Cloud-Blog Backend is Live and Running!");
+});
 router.get("/blogs", async (req, res) => {
   try {
     const container = getContainer();
