@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api", blogRoutes);
 app.use(cors({
-  origin: 'https://orange-mud-051177900.2.azurestaticapps.net', 
+  origin: 'cloud-blog-backend-gvffhqg9hbg8a4gn.centralindia-01.azurewebsites.net', 
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));

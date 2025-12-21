@@ -32,7 +32,7 @@ app.get("/", (req, res) => {
 router.get("/blogs", async (req, res) => {
   try {
     const container = getContainer();
-    const { resources } = await container.items.query("SELECT * FROM Blogs b ORDER BY b.createdAt DESC").fetchAll();
+    const { resources } = await container.items.query("SELECT * FROM c ORDER BY c.createdAt DESC").fetchAll();
     res.json(resources);
   } catch (err) {
     res.status(500).json({ error: err.message });

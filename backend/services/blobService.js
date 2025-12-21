@@ -5,11 +5,20 @@ let containerClient;
 function getContainerClient() {
   if (!containerClient) {
     const connStr = process.env.AZURE_STORAGE_CONNECTION_STRING;
-    if (!connStr) throw new Error("AZURE_STORAGE_CONNECTION_STRING missing in .env");
-    const blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
-    containerClient = blobServiceClient.getContainerClient("blog-images");
+    if (!connStr) {
+        console.error("ERROR: AZURE_STORAGE_CONNECTION_STRING is missing!");
+        return null;
+    }
+    try {
+        const blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
+        containerClient = blobServiceClient.getContainerClient("blog-images");
+    } catch (e) {
+        console.error("Blob Init Error:", e.message);
+        return null;
+    }
   }
   return containerClient;
+
 }
 
 export default async function uploadImage(file) {
