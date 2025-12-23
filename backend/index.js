@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
-dotenv.config(); // Sabse pehle .env load karein
+dotenv.config(); 
 
-import express from "express"; // Ye missing tha!
+import express from "express"; 
 import cors from "cors";
 import blogRoutes from "./routes/blogRoutes.js";
 import { connectToCosmos } from "./services/cosmosService.js";
@@ -12,12 +12,18 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173", 
   "http://localhost:3000", 
-  "https://cloud-blog-backend-gvffhqg9hbg8a4gn.centralindia-01.azurewebsites.net"
+  
+  "https://cloud-blog-backend-gvffhqg9hbg8a4gn.centralindia-01.azurewebsites.net",
+  
+  
+  "https://orange-mud-051177900.2.azurestaticapps.net"
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
+   
     if (!origin) return callback(null, true);
+    
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
@@ -41,9 +47,8 @@ console.log("Connecting to Database...");
 
 connectToCosmos()
   .then(() => {
-    // Database connect hone ke baad hi server start karein
     app.listen(PORT, () => console.log(`✔ Backend running on port ${PORT}`));
   })
   .catch((err) => {
-    console.error("❌ Server failed to start due to DB error:", err);
+    console.error(" Server failed to start due to DB error:", err);
   });
