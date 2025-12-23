@@ -2,20 +2,20 @@ import express from "express";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 
-// Assuming these service files exist in your project structure
-import uploadImage from "../services/blobService.js";
-import { getContainer } from "../services/cosmosService.js";
+
+import uploadImage from "../services/blobService.js"; 
+
+
+import { getContainer, updateBlogInCosmos ,deleteBlogFromCosmos } from "../services/cosmosService.js";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// POST: Create a new blog
-// Route: POST /api/blog
+// --- POST: Create Blog ---
 router.post("/blog", upload.single("image"), async (req, res) => {
   try {
     const { title, content } = req.body;
     
-    // Validate input
     if (!title || !content) {
         return res.status(400).json({ message: "Title and content are required." });
     }
@@ -43,14 +43,12 @@ router.post("/blog", upload.single("image"), async (req, res) => {
   }
 });
 
-// GET: Health Check
-// Route: GET /api/
+// --- GET: Health Check ---
 router.get("/", (req, res) => {
   res.send("Cloud-Blog Backend is Live and Running!");
 });
 
-// GET: Fetch all blogs
-// Route: GET /api/blogs
+// --- GET: Fetch All ---
 router.get("/blogs", async (req, res) => {
   try {
     const container = getContainer();
@@ -61,6 +59,47 @@ router.get("/blogs", async (req, res) => {
   } catch (err) {
     console.error("Error fetching blogs:", err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// --- PUT: Update Blog  ---
+router.put("/blog/:id", upload.single("image"), async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    const { title, content } = req.body;
+    let imageUrl = undefined;
+
+   
+    if (req.file) {
+     
+      imageUrl = await uploadImage(req.file);
+    }
+
+    
+    const updateData = {
+      title,
+      content,
+      ...(imageUrl && { imageUrl }) 
+    };
+
+    
+   
+    const updatedBlog = await updateBlogInCosmos(blogId, updateData);
+
+    res.status(200).json(updatedBlog);
+  } catch (error) {
+    console.error("Update Error:", error);
+    res.status(500).json({ error: "Failed to update blog" });
+  }
+});
+router.delete("/blog/:id", async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    await deleteBlogFromCosmos(blogId);
+    res.status(200).json({ message: "Blog deleted successfully" });
+  } catch (error) {
+    console.error("Delete Error:", error);
+    res.status(500).json({ error: "Failed to delete blog" });
   }
 });
 

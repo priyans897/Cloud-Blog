@@ -1,105 +1,131 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import api from "./api";
+import toast from "react-hot-toast";
+import { FiSend, FiEdit3, FiImage, FiSave } from "react-icons/fi";
+import { useNavigate, useLocation } from "react-router-dom";
 
-export default function CreateBlog({ onBlogCreated }) {
+export default function CreateBlog() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isEditMode = location.state?.blog ? true : false;
+  const existingBlog = location.state?.blog;
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+  useEffect(() => {
+    if (isEditMode && existingBlog) {
+      setTitle(existingBlog.title);
+      setContent(existingBlog.content);
     }
-  };
+  }, [isEditMode, existingBlog]);
 
-  const submitBlog = async () => {
-    if (!title.trim() || !content.trim()) {
-      alert("Please fill in title and content");
+  const handleSubmit = async () => {
+    if (!title || !content) {
+      toast.error("Data Fields Empty!");
       return;
     }
-
-    setLoading(true);
+    const loadingToast = toast.loading(isEditMode ? "Updating Matrix..." : "Uploading to Cloud...");
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("content", content);
       if (image) formData.append("image", image);
 
-      await api.post("/blog", formData);
-      alert(" Blog published successfully!");
-
-      if (onBlogCreated) onBlogCreated();
-
-      setTitle("");
-      setContent("");
-      setImage(null);
-      setImagePreview(null);
-    } catch (err) {
-      console.error(err);
-      alert("Error creating blog: " + (err.response?.data?.error || err.message));
-    } finally {
-      setLoading(false);
+      if (isEditMode) {
+        await api.put(`/blog/${existingBlog.id}`, formData); 
+        toast.success("Blog Updated Successfully!", { id: loadingToast });
+      } else {
+        await api.post("/blog", formData);
+        toast.success("Blog Published!", { id: loadingToast });
+      }
+      navigate("/");
+    } catch (e) { 
+      console.error(e);
+      toast.error("System Failure", { id: loadingToast }); 
     }
   };
 
   return (
-    <div className="create-blog-form">
-      <div className="form-group">
-        <label htmlFor="title">Blog Title</label>
-        <input
-          id="title"
-          type="text"
-          placeholder="Enter your blog title..."
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-        />
+    <div className="glass-panel" style={{ 
+        maxWidth: '800px', 
+        margin: '2rem auto', 
+        paddingBottom: '3rem' 
+    }}>
+      <div className="section-title">
+        {isEditMode ? <FiSave /> : <FiEdit3 />} 
+        {isEditMode ? "Update Neural Link" : "Transmit New Data"}
       </div>
-
-      <div className="form-group">
-        <label htmlFor="content">Blog Content</label>
-        <textarea
-          id="content"
-          placeholder="Write your blog content here..."
-          value={content}
-          onChange={e => setContent(e.target.value)}
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="image">Upload Image</label>
-        <div className="file-input-wrapper">
-          <input
-            id="image"
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        
+        {/* Title Input */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <label style={{color: '#00f3ff', fontSize: '0.9rem', fontWeight: 'bold'}}>TITLE</label>
+          <input 
+            className="input-glow" 
+            placeholder="Enter Title..." 
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
-          <label htmlFor="image" className="file-input-label">
-            {imagePreview ? "✓ Image selected" : "📸 Click to upload image"}
+        </div>
+        
+        {/* Content Input */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <label style={{color: '#00f3ff', fontSize: '0.9rem', fontWeight: 'bold'}}>CONTENT</label>
+          <textarea 
+            className="input-glow" 
+            rows="8"
+            placeholder="Write your story..." 
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+        </div>
+
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label className="input-glow" style={{ 
+              cursor: 'pointer', display: 'flex', alignItems: 'center', 
+              gap: '10px', width: '100%', justifyContent: 'center', 
+              borderStyle: 'dashed' 
+          }}>
+            <FiImage size={20} /> 
+            {image ? " New Image Selected" : "Click to Upload Image"}
+            <input type="file" hidden onChange={(e) => setImage(e.target.files[0])} />
           </label>
         </div>
-        {imagePreview && (
-          <div style={{ marginTop: "1rem", textAlign: "center" }}>
-            <img src={imagePreview} alt="Preview" style={{ maxWidth: "200px", borderRadius: "0.5rem" }} />
-          </div>
-        )}
-      </div>
 
-      <button
-        className="submit-btn"
-        onClick={submitBlog}
-        disabled={loading}
-      >
-        {loading ? "Publishing..." : "Publish Blog"}
-      </button>
+        
+        <button 
+          onClick={handleSubmit}
+          className="submit-btn"
+          style={{
+             marginTop: '20px',       
+             marginBottom: '20px',    
+             padding: '1.2rem',       
+             fontSize: '1.1rem',
+             fontWeight: 'bold',
+             width: '100%',
+             cursor: 'pointer',
+             borderRadius: '10px',
+             border: 'none',
+             color: '#fff',
+             background: isEditMode 
+                ? 'linear-gradient(90deg, #ff9900, #ff0000)' 
+                : 'linear-gradient(90deg, #00f3ff, #0066ff)',
+             boxShadow: isEditMode 
+                ? '0 0 20px rgba(255, 153, 0, 0.4)' 
+                : '0 0 20px rgba(0, 243, 255, 0.4)',
+             transition: 'transform 0.2s ease'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          {isEditMode ? <><FiSave style={{marginRight: 8}}/> UPDATE BLOG</> : <><FiSend style={{marginRight: 8}}/> PUBLISH BLOG</>}
+        </button>
+
+      </div>
     </div>
   );
 }

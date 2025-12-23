@@ -1,53 +1,139 @@
 import { useState, useEffect } from "react";
 import api from "./api";
+import Tilt from "react-parallax-tilt";
+import { formatDistanceToNow } from "date-fns";
+import { FiCalendar, FiEdit, FiTrash2 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
-export default function BlogList({ refresh }) {
+export default function BlogList() {
   const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
-    setLoading(true);
-    api.get("/blogs")
-      .then(res => {
-        setBlogs(res.data || []);
-      })
-      .catch(err => {
-        console.error("Error fetching blogs:", err);
-        setBlogs([]);
-      })
-      .finally(() => setLoading(false));
-  }, [refresh]);
+    api.get("/blogs").then(res => setBlogs(res.data || []));
+  }, []);
 
-  if (loading) {
-    return <div className="empty-state"><p>⏳ Loading blogs...</p></div>;
-  }
+  const handleEdit = (blog) => {
+    navigate("/create", { state: { blog: blog } });
+    navigate(`/edit/${blog.id}`, { state: { blog: blog } });
+  };
+  const handleDelete = async (id) => {
+
+    if (!window.confirm("Are you sure you want to delete this Hologram?")) return;
+
+    const loadingToast = toast.loading("Deleting Data...");
+
+    try {
+
+      await api.delete(`/blog/${id}`);
+
+
+      setBlogs((prevBlogs) => prevBlogs.filter(blog => blog.id !== id));
+
+      toast.success("Hologram Deleted!", { id: loadingToast });
+    } catch (err) {
+      console.error(err);
+      toast.error("Delete Failed", { id: loadingToast });
+    }
+  };
 
   return (
-    <div className="blog-list">
-      {blogs.length === 0 ? (
-        <div className="empty-state">
-          <p>No blogs yet. Create your first one!</p>
-        </div>
-      ) : (
-        blogs.map(blog => (
-          <div key={blog.id} className="blog-item">
-            <h3>{blog.title}</h3>
-            <p>{blog.content}</p>
-            {blog.imageUrl && (
-              <img src={blog.imageUrl} alt={blog.title} />
-            )}
-            <small style={{ color: "#9ca3af" }}>
-              📅 {new Date(blog.createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit"
-              })}
-            </small>
-          </div>
-        ))
-      )}
+    <div style={{ marginTop: '2rem' }}>
+      <div className="section-title">🚀 Holographic Stories</div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: '2rem'
+      }}>
+        {blogs.map(blog => (
+          <Tilt
+            key={blog.id}
+            glareEnable={true}
+            glareMaxOpacity={0.45}
+            scale={1.02}
+            transitionSpeed={2500}
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            <div className="blog-item" style={{ position: 'relative' }}>
+
+              {/* Image */}
+              <div style={{ height: '200px', overflow: 'hidden' }}>
+                <img
+                  src={blog.imageUrl}
+                  alt={blog.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+
+              {/* Content */}
+              <div style={{ padding: '1.5rem' }}>
+                <h3 style={{ color: '#00f3ff', margin: '0 0 10px 0' }}>{blog.title}</h3>
+                <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                  {blog.content.substring(0, 80)}...
+                </p>
+
+                <div style={{
+                  marginTop: '20px',
+                  paddingTop: '15px',
+                  borderTop: '1px solid rgba(255,255,255,0.1)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '0.8rem',
+                  color: '#666'
+                }}>
+                  <span><FiCalendar /> {formatDistanceToNow(new Date(blog.createdAt))} ago</span>
+
+                  {/* EDIT BUTTON */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(blog);
+                    }}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid #00f3ff',
+                      color: '#00f3ff',
+                      padding: '5px 10px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+
+                  >
+                    <FiEdit /> Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(blog.id);
+                    }}
+                    style={{
+                      background: 'rgba(255, 0, 0, 0.1)',
+                      border: '1px solid #ff0055',
+                      color: '#ff0055',
+                      padding: '5px 10px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      marginLeft: '10px'
+                    }}
+                  >
+                    <FiTrash2 /> Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Tilt>
+        ))}
+      </div>
     </div>
   );
 }

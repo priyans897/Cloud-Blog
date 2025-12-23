@@ -35,6 +35,40 @@ export async function connectToCosmos() {
     throw err;
   }
 }
+export const updateBlogInCosmos = async (id, updatedData) => {
+  try {
+    
+    const { resource: existingBlog } = await container.item(id, id).read();
+
+    if (!existingBlog) {
+      throw new Error("Blog not found");
+    }
+
+   
+    const newBlogData = {
+      ...existingBlog, 
+      ...updatedData,  
+      id: id           
+    };
+
+    
+    const { resource } = await container.item(id, id).replace(newBlogData);
+    return resource;
+  } catch (error) {
+    console.error("Error updating blog in Cosmos:", error);
+    throw error;
+  }
+};
+export const deleteBlogFromCosmos = async (id) => {
+  try {
+   
+    await container.item(id, id).delete();
+    return true;
+  } catch (error) {
+    console.error("Error deleting from Cosmos:", error);
+    throw error;
+  }
+};
 
 export function getContainer() {
   if (!container) {
