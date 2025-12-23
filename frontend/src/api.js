@@ -1,7 +1,12 @@
-// src/api.js
 import axios from "axios";
 
-export default axios.create({
-  
-  baseURL: "https://cloud-blog-backend-gvffhqg9hbg8a4gn.centralindia-01.azurewebsites.net/api"
+
+
+
+const BASE_URL = "https://cloud-blog-backend-gvffhqg9hbg8a4gn.centralindia-01.azurewebsites.net/api";
+
+const api = axios.create({
+  baseURL: BASE_URL,
 });
+
+export default api;
