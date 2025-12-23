@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { FiCalendar, FiEdit, FiTrash2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { FiExternalLink } from "react-icons/fi";
 
 export default function BlogList() {
   const [blogs, setBlogs] = useState([]);
@@ -74,6 +75,23 @@ export default function BlogList() {
                 <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
                   {blog.content.substring(0, 80)}...
                 </p>
+                <button
+                  onClick={() => navigate(`/blog/${blog.id}`, { state: { blog } })}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#00f3ff',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    marginTop: '5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  Read Full Story <FiExternalLink />
+                </button>
 
                 <div style={{
                   marginTop: '20px',

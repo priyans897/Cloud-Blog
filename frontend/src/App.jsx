@@ -5,6 +5,7 @@ import CreateBlog from "./CreateBlog";
 import BlogList from "./BlogList";
 import Navbar from "./Navbar"; 
 import { Toaster } from "react-hot-toast";
+import BlogDetail from "./BlogDetail";
 import "./App.css";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
 
           
           <Route path="/edit/:id" element={<CreateBlog />} />
+          <Route path="/blog/:id" element={<BlogDetail />} />
         </Routes>
       </div>
     </BrowserRouter>
