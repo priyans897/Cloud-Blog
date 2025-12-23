@@ -1,25 +1,44 @@
 import { CosmosClient } from "@azure/cosmos";
+import dotenv from "dotenv";
+dotenv.config();
 
-let container;
+let container = null;
 
-function getContainer() {
+
+export async function connectToCosmos() {
+  if (container) return container;
+
+  const uri = process.env.COSMOS_URI;
+  const key = process.env.COSMOS_KEY;
+
+  if (!uri || !key) {
+    throw new Error("COSMOS_URI or COSMOS_KEY is missing in .env file");
+  }
+
+  try {
+    const client = new CosmosClient({ endpoint: uri, key });
+
+    const { database } = await client.databases.createIfNotExists({ id: "blogdb" });
+    console.log(`✔ Database '${database.id}' ready.`);
+
+    
+    const { container: c } = await database.containers.createIfNotExists({ 
+        id: "blogs",
+        partitionKey: "/id" 
+    });
+    console.log(`✔ Container '${c.id}' ready.`);
+
+    container = c;
+    return container;
+  } catch (err) {
+    console.error("Cosmos DB Connection Failed:", err.message);
+    throw err;
+  }
+}
+
+export function getContainer() {
   if (!container) {
-    const uri = process.env.COSMOS_URI;
-    const key = process.env.COSMOS_KEY;
-
-    
-    if (!uri) throw new Error("BACKEND_ERROR: COSMOS_URI is undefined. Check Azure App Settings names.");
-
-    const sanitizedUri = uri.trim().replace(/\/$/, "");
-    
-    try {
-      const client = new CosmosClient({ endpoint: sanitizedUri, key });
-      container = client.database("blogdb").container("blogs");
-    } catch (err) {
-      throw new Error(`Cosmos Client Failed: ${err.message}`);
-    }
+    throw new Error("Database not initialized. Call connectToCosmos() first in index.js");
   }
   return container;
 }
-
-export { getContainer };
