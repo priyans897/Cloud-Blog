@@ -14,7 +14,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // --- POST: Create Blog ---
 router.post("/blog", upload.single("image"), async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const { title, content , userId, userName} = req.body;
     
     if (!title || !content) {
         return res.status(400).json({ message: "Title and content are required." });
@@ -29,7 +29,10 @@ router.post("/blog", upload.single("image"), async (req, res) => {
         id: uuidv4(), 
         title, 
         content, 
-        imageUrl, 
+        imageUrl,
+        userId,
+        userName,
+        type: "blog", 
         createdAt: new Date().toISOString() 
     };
 
@@ -49,16 +52,28 @@ router.get("/", (req, res) => {
 });
 
 // --- GET: Fetch All ---
+// --- GET: Get All Blogs ---
 router.get("/blogs", async (req, res) => {
   try {
     const container = getContainer();
-    const { resources } = await container.items
-        .query("SELECT * FROM c ORDER BY c.createdAt DESC")
-        .fetchAll();
-    res.json(resources);
-  } catch (err) {
-    console.error("Error fetching blogs:", err);
-    res.status(500).json({ error: err.message });
+    const querySpec = {
+      query: "SELECT * FROM c WHERE IS_DEFINED(c.title)"
+    };
+
+    const { resources } = await container.items.query(querySpec).fetchAll();
+    
+    // Sort by Date (Newest First)
+   
+    const sortedBlogs = resources.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dateB - dateA;
+    });
+
+    res.status(200).json(sortedBlogs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 });
 

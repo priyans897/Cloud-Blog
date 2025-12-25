@@ -10,27 +10,50 @@ export default function CreateBlog() {
   const isEditMode = location.state?.blog ? true : false;
   const existingBlog = location.state?.blog;
 
+ 
+  const user = JSON.parse(localStorage.getItem("user"));
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
 
   useEffect(() => {
+   
+    if (isEditMode && existingBlog && user?.id !== existingBlog.userId) {
+       toast.error("Unauthorized Access! 🚫");
+       navigate("/");
+    }
+
     if (isEditMode && existingBlog) {
       setTitle(existingBlog.title);
       setContent(existingBlog.content);
     }
-  }, [isEditMode, existingBlog]);
+  }, [isEditMode, existingBlog, user, navigate]);
 
   const handleSubmit = async () => {
     if (!title || !content) {
       toast.error("Data Fields Empty!");
       return;
     }
+
+    
+    if (!user) {
+      toast.error("Access Denied! You must Login first. 🔒");
+      navigate("/login");
+      return;
+    }
+
     const loadingToast = toast.loading(isEditMode ? "Updating Matrix..." : "Uploading to Cloud...");
+    
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("content", content);
+      
+      
+      formData.append("userId", user.id);     
+      formData.append("userName", user.name); 
+
       if (image) formData.append("image", image);
 
       if (isEditMode) {
@@ -58,6 +81,13 @@ export default function CreateBlog() {
         {isEditMode ? "Update Neural Link" : "Transmit New Data"}
       </div>
       
+      
+      {user && (
+        <div style={{ textAlign: 'center', color: '#aaa', marginBottom: '20px', fontSize: '0.9rem' }}>
+          Posting as: <span style={{ color: '#00f3ff', fontWeight: 'bold' }}>{user.name}</span>
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         {/* Title Input */}
@@ -83,7 +113,6 @@ export default function CreateBlog() {
           />
         </div>
 
-        
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <label className="input-glow" style={{ 
               cursor: 'pointer', display: 'flex', alignItems: 'center', 
@@ -96,7 +125,6 @@ export default function CreateBlog() {
           </label>
         </div>
 
-        
         <button 
           onClick={handleSubmit}
           className="submit-btn"

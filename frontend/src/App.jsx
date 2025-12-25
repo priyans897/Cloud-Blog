@@ -6,6 +6,7 @@ import BlogList from "./BlogList";
 import Navbar from "./Navbar"; 
 import { Toaster } from "react-hot-toast";
 import BlogDetail from "./BlogDetail";
+import AuthPage from "./AuthPage";
 import "./App.css";
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
           
           <Route path="/edit/:id" element={<CreateBlog />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/login" element={<AuthPage />} />
         </Routes>
       </div>
     </BrowserRouter>

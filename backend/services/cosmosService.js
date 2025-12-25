@@ -69,6 +69,20 @@ export const deleteBlogFromCosmos = async (id) => {
     throw error;
   }
 };
+export const findUserByEmail = async (email) => {
+  const querySpec = {
+    query: "SELECT * FROM c WHERE c.email = @email",
+    parameters: [{ name: "@email", value: email }]
+  };
+  const { resources } = await container.items.query(querySpec).fetchAll();
+  return resources.length > 0 ? resources[0] : null;
+};
+
+
+export const createUserInCosmos = async (user) => {
+  const { resource } = await container.items.create(user);
+  return resource;
+};
 
 export function getContainer() {
   if (!container) {
